@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>MacroNarr</title>
+        <link rel="icon" type="image/x-icon" href="assets/discourse.ico" />
+        <link href="css/styles.css" rel="stylesheet" /> 
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#"></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" aria-current="page" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" aria-current="page" href="about.html">About</a></li>
+                        <li class="nav-item"><a class="nav-link" aria-current="page" href="basics.html">Basics</a></li>
+                        <li class="nav-item"><a class="nav-link" aria-current="page" href="instructions.html">Instructions</a></li>
+                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="try_it_out.html">Try it out</a></li>                       
+                    </ul>
+                </div>            
+            </div>
+        </nav>
+        <div class="container">
+            <div class="text-center mt-5">
+                <h1>Try it out</h1>
+
+                <div class="spinner" id="loader"></div>
+                <div id="loading_text">Loading... <br>(average loading time: &#126 20sec)</div>
+
+                <div class="container" id="checkbox_div" style = "display:none; padding-left: 120px;; text-align: left">
+                    <p class="lead"><u>Terms and Conditions</u></p>
+                    <p>1. I will use the MacroNarr tool solely for research purposes.<br></p>
+                    <p>2. Any content I upload wil not contain confidential or personally identifiable information pertaining to the user or research participants.<br></p>
+                    <p>3. I understand that the MacroNarr team who supports this tool may not always be able to address technical issues in a timely manner.<br></p>
+                    <div style= "margin-left: 410px; text-align: left">
+                        <input id="checkbox" type="checkbox" value="checkbox"><label for="checkbox"><span class="tab-98"></span>Accept</label>
+                    </div>
+                </div>
+
+
+                <div class="container" id="to_hide" style = "display:none">
+
+                    <div style= "margin-left: 290px; text-align: left">
+
+                        <div class="div-99">
+                            <p><br>Step 1: Upload the target file (csv)<span class="tab-99"></span></p>
+                                <input type="file" id="uploadTarget" accept=".csv" />
+                                <input type="button" onclick="document.getElementById('uploadTarget').click()" value="Select" />
+                        </div>
+
+                        <div class="div-99">
+                            <p><br>Step 2: Upload the reference file (csv)<span class="tab-99"></span></p>
+                                <input type="file" id="uploadReference" accept=".csv" />
+                                <input type="button" onclick="document.getElementById('uploadReference').click()" value="Select" />
+                        </div> 
+
+
+                        <div class="div-99">
+                            <p><br>Step 3: Select desired output<span class="tab-99"></span></p>
+                            <select id="desired_output">
+                                <option value="null" selected>None</option>
+                                <option value="all_output">All output</option>
+                                 <option value="ug">Unigram count (unique, total)</option>
+                                <option value="bg_tg">Bigrams and trigrams (bg, tg)</option>
+                                <option value="bg_tg_freq">Bg, tg & frequencies (based on reference)</option>
+                                <option value="acs">Associative Chunk Strength (ACS)</option>                    
+                            </select>
+                        </div>
+
+                        <div class="div-99">
+                            <p><span class="tab-99"></span><br>Step 4:<span class="tab-99"></span></p>
+                            <button class="btn-99" type="button" id="run_button">Run</button><p><span class="tab-99"></span>
+                            <span class="tab-99"></span></p><div style="visibility: hidden" id="download_div_button"></div><div style="display:none" id="hidden_output_target_ug"></div><div style="display:none" id="hidden_output_reference_ug"></div><div style="display:none" id="hidden_output_target"></div><div style="display:none" id="hidden_output_reference"></div><div style="display:none" id="hidden_output_target_ACS"></div><div style="display:none" id="hidden_output_reference_ACS"></div><div style="display:none" id="hidden_output_target_freqs"></div><div style="display:none" id="hidden_output_reference_freqs"></div>
+
+                        </div> 
+
+                    </div>
+
+
+                    <div style="margin-left: 100px; text-indent:-1135px">Output:</div>                    
+
+                    <div style="text-align: left;border:2px inset #AAA;cursor:text;height:500px;overflow:auto;width:1100px;margin: auto;resize:both">
+                    <div class="center">
+                    <div id="output"></div>
+                    
+                </div>        
+
+            </div>
+        </div>
+
+        <py-config src="./scripts/pyscript.toml"></py-config>
+        <py-script>
+
+        import pyodide
+        from js import document
+        from io import BytesIO
+        import asyncio
+        import pandas as pd
+        import panel as pn
+        import numpy as np
+        import nltk
+
+
+        def calculate_ACS(target, reference, conditional_target, conditional_reference):
+            if conditional_target == 1:            
+                target = target.iloc[:, 2:]
+            else:
+                target = target.iloc[:, 1:]
+            if conditional_reference == 1:            
+                reference = reference.iloc[:, 2:]
+            else:
+                reference = reference.iloc[:, 1:]
+            dfs = [target, reference]
+            iteration_df = 1
+            iteration_participant = 1
+            reference_freqs = dfs[1].stack().value_counts() - 1
+            reference_freqs = reference_freqs.drop("n/a")
+            bg_tg_freqs_per_participant = []
+            target_participant_means = []    
+            reference_participant_means = []
+            for df in dfs:
+                for participant in df:
+                    for combo in df[participant]:
+                        if combo in reference_freqs.index and combo != "n/a":
+                            bg_tg_freqs_per_participant.append(reference_freqs[(combo)])
+                        elif combo == "n/a":
+                            pass
+                        else:
+                            bg_tg_freqs_per_participant.append(0)
+                    if iteration_participant == 1:
+                        IDs_match_to_ckeck = participant
+                        iteration_participant = 2
+                    elif iteration_participant == 2 and iteration_df == 1:
+                        assert IDs_match_to_ckeck[:-2] == participant[:-2]
+                        mean = np.mean(bg_tg_freqs_per_participant)   
+                        target_participant_means.append({'Participant': participant[:-2], 'Mean': mean})
+                        bg_tg_freqs_per_participant = []
+                        iteration_participant = 1
+                    elif iteration_participant == 2 and iteration_df == 2:
+                        assert IDs_match_to_ckeck[:-2] == participant[:-2]
+                        mean = np.mean(bg_tg_freqs_per_participant)   
+                        reference_participant_means.append({'Participant': participant[:-2], 'Mean': mean})
+                        bg_tg_freqs_per_participant = []
+                        iteration_participant = 1
+                    else:
+                        pass
+                iteration_df = 2
+            ACS_target = pd.DataFrame(target_participant_means) 
+            ACS_reference = pd.DataFrame(reference_participant_means)              
+            return ACS_target, ACS_reference
+
+
+        def calculate_freqs(target, reference, conditional_target, conditional_reference):
+            if conditional_target == 1:            
+                target = target.iloc[:, 2:]
+            else:
+                target = target.iloc[:, 1:]
+            if conditional_reference == 1:            
+                reference = reference.iloc[:, 2:]
+            else:
+                reference = reference.iloc[:, 1:]
+            dfs = [target, reference]
+            
+            target_freqs = dfs[0].stack().value_counts() - 1
+            target_freqs = target_freqs.drop("n/a")
+            reference_freqs = dfs[1].stack().value_counts() - 1
+            reference_freqs = reference_freqs.drop("n/a")
+            freqs_to_save = []
+            target_freqs_df = pd.DataFrame()
+            reference_freqs_df = pd.DataFrame()
+            iteration_df = 1
+            for df in dfs:
+                for participant in df:
+                    for combo in df[participant]:
+                        if combo in reference_freqs.index and combo != "n/a":
+                            freqs_to_save.append([combo, reference_freqs[(combo)]])
+                        elif combo == "n/a":
+                            pass
+                        else:
+                            freqs_to_save.append([combo, 0])
+                    df_freqs_to_save = pd.DataFrame(freqs_to_save, columns = [participant+"_sorted_by_frequency", participant+"_frequency"])
+                    df_freqs_to_save = df_freqs_to_save.sort_values([participant+"_frequency"], ascending=False).reset_index(drop=True)
+                    if iteration_df == 1:
+                        target_freqs_df = pd.concat([target_freqs_df, df_freqs_to_save], axis=1)
+                    else:
+                        reference_freqs_df = pd.concat([reference_freqs_df, df_freqs_to_save], axis=1)
+                    freqs_to_save = []
+                iteration_df = 2           
+            target_freqs_df = target_freqs_df.replace(np.nan, '', regex=True)
+            reference_freqs_df = reference_freqs_df.replace(np.nan, '', regex=True)
+            return target_freqs_df, reference_freqs_df
+
+
+
+
+        def is_number_except_plus(df_copied, result=None):
+            if result is None:
+                result = {}     
+            for col in df_copied:
+                df_copied[col] = df_copied[col].apply(lambda x: x.replace('+', '') if isinstance(x, str) else x)
+                df_copied[col] = df_copied[col].apply(lambda x: int(x) if isinstance(x, str) and x.isdigit() else x)
+                rows_with_strings = df_copied[df_copied[col].apply(lambda x: isinstance(x, str))][col].tolist()
+                if rows_with_strings:
+                    result.setdefault(col, []).extend(rows_with_strings)
+            return result
+
+
+        def clean_df_from_dict(df_original, result_dict):
+            for col, values in result_dict.items():
+                df_original[col] = df_original[col].apply(lambda x: np.nan if x in values else x)
+            return df_original
+
+        def contains_plus(column):
+            return any('+' in (str(value) if not isinstance(value, (int, float)) else str(value)) for value in column)
+
+
+        def adjust_combinations_df_length(combinations_df, MC_column):
+            column_name = MC_column.name
+            if column_name not in combinations_df.columns:
+                if len(combinations_df) > len(MC_column):
+                    combinations_df.insert(0, column_name,
+                                           (list(MC_column.values) + [None] * len(combinations_df))[:len(combinations_df)], True)
+                elif len(combinations_df) < len(MC_column):
+                    combinations_df = combinations_df.reindex(list(range(0, len(MC_column)))).reset_index(drop=True)
+                    combinations_df.insert(0, column_name, MC_column.values)
+                else:
+                    combinations_df.insert(0, column_name, MC_column.values)
+            return combinations_df
+
+        def calculate_new_MC_column(length):
+            new_MC_column_data = []
+            for i in range(1, length+1):
+                new_MC_column_data.append('mc{}'.format(i))
+            return new_MC_column_data
+
+
+        def clean_data(target_ug_string_list, reference_ug_string_list, target_string_list, reference_string_list, target_freqs_string_list, reference_freqs_string_lists, target_ACS_string_list, reference_ACS_string_list):
+            if target_string_list == "Empty" and target_freqs_string_list == "Empty" and target_ACS_string_list == "Empty":
+                loop_string_lists = [target_ug_string_list, reference_ug_string_list]
+                iteration_num = 1
+            elif target_ug_string_list == "Empty" and target_freqs_string_list == "Empty" and target_ACS_string_list == "Empty":
+                loop_string_lists = [target_string_list, reference_string_list]
+                iteration_num = 3
+            elif target_ug_string_list == "Empty" and target_string_list == "Empty" and target_ACS_string_list == "Empty":
+                loop_string_lists = [target_freqs_string_list, reference_freqs_string_lists]
+                iteration_num = 5
+            elif target_ug_string_list == "Empty" and target_string_list == "Empty" and target_freqs_string_list == "Empty":
+                loop_string_lists = [target_ACS_string_list, reference_ACS_string_list]
+                iteration_num = 7
+            else:
+                loop_string_lists = [target_ug_string_list, reference_ug_string_list, target_string_list, reference_string_list, target_freqs_string_list, reference_freqs_string_lists, target_ACS_string_list, reference_ACS_string_list]
+                iteration_num = 1
+            appended_data = []
+            for string_list in loop_string_lists:        
+                string_list_new = list(string_list.split("["))
+                df = pd.DataFrame(string_list_new[2:])
+                df = df.iloc[:, 0].str.split(',', expand=True)
+                replacers = {"'": '', ":": '', "n/a": '', "]": ''}
+                df = df.replace(replacers, regex=True)
+                df.columns = df.iloc[0]
+                df = df[1:]
+                final_df = df.iloc[:, :-1]
+                if iteration_num == 1:
+                	final_df.insert(0, "TARGET (unigrams count)", np.nan)
+                elif iteration_num == 2:
+                	final_df.insert(0, "REFERENCE (unigrams count)", np.nan)
+                elif iteration_num == 3:
+                    final_df.insert(0, "TARGET (bigrams and trigrams)", np.nan)
+                elif iteration_num == 4:
+                    final_df.insert(0, "REFERENCE (bigrams and trigrams)", np.nan)
+                elif iteration_num == 5:
+                    final_df.insert(0, "TARGET (bg, tg & frequencies, based on reference file)", np.nan)
+                elif iteration_num == 6:
+                    final_df.insert(0, "REFERENCE (bg, tg & frequencies, based on reference file)", np.nan)
+                elif iteration_num == 7:
+                    final_df.insert(0, "TARGET (ACS)", np.nan)
+                else:
+                    final_df.insert(0, "REFERENCE (ACS)", np.nan)
+                appended_data.append(final_df)  
+                iteration_num += 1
+            merged_df = pd.concat(appended_data, axis = 1)
+            return merged_df
+
+        def clean_warnings(warnings_list):
+            for item in range (0,len(warnings_list)):
+                warnings_list.insert(item*2,"***NOTE***: ")
+            result = ''.join(str(x) for x in warnings_list)
+            return result
+
+
+        async def calculate_variable(target_file, reference_file):
+            files = [target_file, reference_file]
+            target_df_combinations = pd.DataFrame()
+            reference_df_combinations = pd.DataFrame()
+            warnings = []    
+            if target_file.name == reference_file.name:
+                warnings.append(
+                    f"Your file {target_file.name} and your file {reference_file.name} have the same name. Did you mean to upload different files? Proceeding with calculations...")
+            target_props_count = []
+            reference_props_count = []
+            iteration_number_file_loop = 1
+            for file in files:
+                if iteration_number_file_loop == 1:
+                    file_name = target_file.name
+                else:
+                    file_name = reference_file.name
+
+                array_buf = await file.arrayBuffer()
+                file_bytes = array_buf.to_bytes() 
+                file_readable = BytesIO(file_bytes) 
+
+                df = pd.read_csv(file_readable)
+
+                
+                if pd.api.types.is_string_dtype(df.iloc[:, 0]):
+                    first_column_is_text = True
+                else:
+                    first_column_is_text = False
+                    warnings.append(f"In your file {file_name}, the first column contained input other than text. Adding column with input per row as 'mc_(n of row)'.")
+
+                string_dict = {}
+                string_dict = is_number_except_plus(df.iloc[:, 1:], string_dict)
+                if string_dict:
+                    df = clean_df_from_dict(df, string_dict)
+                    warnings.append(
+                            f"Ignoring the first column and any cells with '+' in your file {file_name}, the following columns have values with text and these values have been excluded from calculations: {string_dict}.")
+
+                
+                iteration_number_col_loop = 1
+                for col in df:
+                    if iteration_number_col_loop == 1 and first_column_is_text:
+                        column_with_MC_code_labels = df.iloc[:, 0]
+                        iteration_number_col_loop = 2
+                        continue
+                        
+                    elif iteration_number_col_loop == 1 and not first_column_is_text:
+                        length_of_values = df.iloc[:, 0].count()
+                        data_for_MC_column = calculate_new_MC_column(length_of_values)
+                        df.insert(1, 'Main_Concepts_Labels', data_for_MC_column)
+                        column_with_MC_code_labels = df.iloc[:, 1]
+                        iteration_number_col_loop = 2
+                    else:
+                        
+                        if df[col].dtype.kind not in 'if':
+                            # check if columns.dtype is not "i" (integer) or "f" (float) - i.e. column contain the "+" string, thus a repetition
+                            df[col] = df[col].astype(str).apply(lambda g: g.split("+"))
+                            df_rep = pd.DataFrame(list(zip(column_with_MC_code_labels, df[col])),
+                                                  columns=[column_with_MC_code_labels.name, df[col].name])
+                            df_rep = df_rep.explode(col)
+                            df_rep[col] = df_rep[col].astype(float)
+                            props_df_to_use = df_rep
+
+                        else:
+                            df_no_rep = pd.DataFrame(list(zip(column_with_MC_code_labels, df[col])),
+                                                     columns=[column_with_MC_code_labels.name, df[col].name])
+                            props_df_to_use = df_no_rep
+                        
+                        propssorted = props_df_to_use.sort_values([col], ascending=True).dropna()
+                        count_props = len(propssorted)
+                        count_props_unique = len(propssorted.drop_duplicates(subset = [propssorted.columns[0]]))
+                        bigrams = propssorted.apply(lambda row: list(nltk.ngrams(row, 2)))
+                        bgres = [''.join(tups) for tups in bigrams.iloc[:, 0]]
+                        #trigrams
+                        trigrams = propssorted.apply(lambda row: list(nltk.ngrams(row, 3)))
+                        tgres = [''.join(tups) for tups in trigrams.iloc[:, 0]]
+
+                        if iteration_number_file_loop == 1:
+                            target_df_combinations = pd.concat([target_df_combinations, pd.DataFrame(
+                                {col + "bg": pd.Series(bgres, dtype = object), col + "tg": pd.Series(tgres, dtype = object)})], axis=1)
+                            target_props_count.append({'Participant': col, 'Count_Unigrams_Unique': count_props_unique, 'Count_Unigrams_Total': count_props})
+                        elif iteration_number_file_loop == 2:
+                            reference_df_combinations = pd.concat([reference_df_combinations, pd.DataFrame(
+                                {col + "bg": pd.Series(bgres, dtype = object), col + "tg": pd.Series(tgres, dtype = object)})], axis=1)
+                            reference_props_count.append({'Participant': col, 'Count_Unigrams_Unique': count_props_unique, 'Count_Unigrams_Total': count_props})
+                        else:
+                            raise ValueError("Something went wrong with the calculation...")
+
+
+                if iteration_number_file_loop == 1:
+                    if not first_column_is_text:
+                        target_df_combinations = adjust_combinations_df_length(target_df_combinations, df.iloc[:, 0])
+                        target_df_combinations.insert(1, column_with_MC_code_labels.name,
+                                                      list(column_with_MC_code_labels.values))
+                        target_two_columns_added = 1
+                    else:
+                        target_df_combinations = adjust_combinations_df_length(target_df_combinations,
+                                                                               column_with_MC_code_labels)
+                        target_two_columns_added = 0
+                    target_count_df = pd.DataFrame(target_props_count) 
+                elif iteration_number_file_loop == 2:
+                    if not first_column_is_text:
+                        reference_df_combinations = adjust_combinations_df_length(reference_df_combinations, df.iloc[:, 0])
+                        reference_df_combinations.insert(1, column_with_MC_code_labels.name,
+                                                         list(column_with_MC_code_labels.values))
+                        reference_two_columns_added = 1
+                    else:
+                        reference_df_combinations = adjust_combinations_df_length(reference_df_combinations,
+                                                                                  column_with_MC_code_labels)
+                        reference_two_columns_added = 0
+                    reference_count_df = pd.DataFrame(reference_props_count)
+                else:
+                    raise ValueError("Something wrong with the calculation...")
+
+                iteration_number_file_loop += 1
+
+            check1 = target_two_columns_added == reference_two_columns_added
+            check2 = target_df_combinations.iloc[:, 0].isin(reference_df_combinations.iloc[:, 0]).any()
+
+            if not check1 or not check2:
+                warnings.append(
+                    f"Your file {target_file.name} and your file {reference_file.name} do not have the same code labels. ACS calculations may be wrong...")
+            
+            target_df_combinations = target_df_combinations.replace(np.nan, 'n/a', regex=True)
+            reference_df_combinations = reference_df_combinations.replace(np.nan, 'n/a', regex=True)
+            ACS_target_df, ACS_reference_df = calculate_ACS(target_df_combinations, reference_df_combinations, target_two_columns_added, reference_two_columns_added)
+            target_freqs, reference_freqs = calculate_freqs(target_df_combinations, reference_df_combinations, target_two_columns_added, reference_two_columns_added)
+            return target_count_df, reference_count_df, target_df_combinations, reference_df_combinations, target_freqs, reference_freqs, ACS_target_df, ACS_reference_df, warnings
+
+
+
+        async def print_output(event):
+            input_target_file = document.getElementById('uploadTarget').files.item(0)
+            input_reference_file = document.getElementById('uploadReference').files.item(0)
+            try:
+                assert input_target_file != None and input_reference_file != None
+                document.getElementById("output").innerHTML = "Please wait..."                             
+                target_count_df_to_show, reference_count_df_to_show, target_df_to_show, reference_df_to_show, target_freqs_to_show, reference_freqs_to_show, ACS_target_to_show, ACS_reference_to_show, warnings = await calculate_variable(input_target_file, input_reference_file)
+                warnings_to_show = clean_warnings(warnings)
+
+                target_df_to_show = target_df_to_show.replace('n/a', '', regex=True)
+                reference_df_to_show = reference_df_to_show.replace('n/a', '', regex=True)
+                document.getElementById("output").innerHTML = "" 
+                desired_output = document.getElementById('desired_output').value
+                if desired_output == "null":
+                    document.getElementById("output").innerHTML = "No output to show"
+                else:
+                    document.getElementById("output").innerHTML = warnings_to_show
+                    table_count_target = pn.pane.DataFrame(target_count_df_to_show, index = False)
+                    table_count_reference = pn.pane.DataFrame(reference_count_df_to_show, index = False)
+                    table_target = pn.pane.DataFrame(target_df_to_show, index = False)
+                    table_reference = pn.pane.DataFrame(reference_df_to_show, index = False)
+                    table_target_ACS = pn.pane.DataFrame(ACS_target_to_show, index = False)
+                    table_reference_ACS = pn.pane.DataFrame(ACS_reference_to_show, index = False)
+                    table_target_freqs = pn.pane.DataFrame(target_freqs_to_show, index = False)
+                    table_reference_freqs = pn.pane.DataFrame(reference_freqs_to_show, index = False)
+                    data_target_ug = [target_count_df_to_show.columns.values.tolist()] + target_count_df_to_show.values.tolist()
+                    data_reference_ug = [reference_count_df_to_show.columns.values.tolist()] + reference_count_df_to_show.values.tolist()
+                    data_target = [target_df_to_show.columns.values.tolist()] + target_df_to_show.values.tolist()
+                    data_reference = [reference_df_to_show.columns.values.tolist()] + reference_df_to_show.values.tolist()
+                    data_target_freqs = [target_freqs_to_show.columns.values.tolist()] + target_freqs_to_show.values.tolist()
+                    data_reference_freqs = [reference_freqs_to_show.columns.values.tolist()] + reference_freqs_to_show.values.tolist()
+                    data_target_ACS = [ACS_target_to_show.columns.values.tolist()] + ACS_target_to_show.values.tolist()
+                    data_reference_ACS = [ACS_reference_to_show.columns.values.tolist()] + ACS_reference_to_show.values.tolist()
+
+                    if desired_output == "all_output":
+                        pn.Row("## TARGET (unigram count)", table_count_target, "## REFERENCE (unigram count)", table_count_reference, "## TARGET (bigrams and trigrams)", table_target, "## REFERENCE (bigrams and trigrams)", table_reference, "## TARGET (bg, tg & frequencies, based on reference file)", table_target_freqs, "## REFERENCE (bg, tg & frequencies, based on reference file)", table_reference_freqs, "## TARGET (ACS)", table_target_ACS, "## REFERENCE (ACS)", table_reference_ACS).servable(target='output')
+                        document.getElementById("hidden_output_target_ug").innerText = data_target_ug
+                        document.getElementById("hidden_output_reference_ug").innerText = data_reference_ug
+                        document.getElementById("hidden_output_target").innerText = data_target
+                        document.getElementById("hidden_output_reference").innerText = data_reference
+                        document.getElementById("hidden_output_target_freqs").innerText = data_target_freqs
+                        document.getElementById("hidden_output_reference_freqs").innerText = data_reference_freqs
+                        document.getElementById("hidden_output_target_ACS").innerText = data_target_ACS
+                        document.getElementById("hidden_output_reference_ACS").innerText = data_reference_ACS
+                    elif desired_output == "ug":
+                        pn.Row("## TARGET (unigram count)", table_count_target, "## REFERENCE (unigram count)", table_count_reference).servable(target='output')
+                        document.getElementById("hidden_output_target_ug").innerText = data_target_ug
+                        document.getElementById("hidden_output_reference_ug").innerText = data_reference_ug                
+                        document.getElementById("hidden_output_target").innerText = "Empty"
+                        document.getElementById("hidden_output_reference").innerText = "Empty"
+                        document.getElementById("hidden_output_target_freqs").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_freqs").innerText = "Empty"
+                        document.getElementById("hidden_output_target_ACS").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_ACS").innerText = "Empty"
+                    elif desired_output == "bg_tg":
+                        pn.Row("## TARGET (bigrams and trigrams)", table_target, "## REFERENCE (bigrams and trigrams)", table_reference).servable(target='output')
+                        document.getElementById("hidden_output_target_ug").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_ug").innerText = "Empty"
+                        document.getElementById("hidden_output_target").innerText = data_target
+                        document.getElementById("hidden_output_reference").innerText = data_reference
+                        document.getElementById("hidden_output_target_freqs").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_freqs").innerText = "Empty"
+                        document.getElementById("hidden_output_target_ACS").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_ACS").innerText = "Empty"
+                    elif desired_output == "bg_tg_freq":
+                        pn.Row("## TARGET (bg, tg & frequencies, based on reference file)", table_target_freqs, "## REFERENCE (bg, tg & frequencies, based on reference file)", table_reference_freqs).servable(target='output')
+                        document.getElementById("hidden_output_target_ug").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_ug").innerText = "Empty"
+                        document.getElementById("hidden_output_target").innerText = "Empty"
+                        document.getElementById("hidden_output_reference").innerText = "Empty"
+                        document.getElementById("hidden_output_target_freqs").innerText = data_target_freqs
+                        document.getElementById("hidden_output_reference_freqs").innerText = data_reference_freqs
+                        document.getElementById("hidden_output_target_ACS").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_ACS").innerText = "Empty"
+
+                    else:
+                        pn.Row("## TARGET (ACS)", table_target_ACS, "## REFERENCE (ACS)", table_reference_ACS).servable(target='output')
+                        document.getElementById("hidden_output_target_ug").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_ug").innerText = "Empty"
+                        document.getElementById("hidden_output_target").innerText = "Empty"
+                        document.getElementById("hidden_output_reference").innerText = "Empty"
+                        document.getElementById("hidden_output_target_freqs").innerText = "Empty"
+                        document.getElementById("hidden_output_reference_freqs").innerText = "Empty"
+                        document.getElementById("hidden_output_target_ACS").innerText = data_target_ACS
+                        document.getElementById("hidden_output_reference_ACS").innerText = data_reference_ACS
+
+                    document.getElementById("download_div_button").style.visibility = "visible"
+            except:
+                try:
+                    assert (input_target_file is None) != (input_reference_file is None)
+                    document.getElementById("output").innerHTML = "One file is missing....Please upload the other file."
+                    document.getElementById("download_div_button").style.visibility = "hidden"
+                except:
+                    assert input_target_file == None and input_reference_file == None
+                    document.getElementById("output").innerHTML = "Both files are missing....Please upload the two files."
+                    document.getElementById("download_div_button").style.visibility = "hidden"
+
+
+        def download_output():
+            get_target_ug_output = document.getElementById("hidden_output_target_ug").innerText
+            get_reference_ug_output = document.getElementById("hidden_output_reference_ug").innerText
+            get_target_output = document.getElementById("hidden_output_target").innerText
+            get_reference_output = document.getElementById("hidden_output_reference").innerText
+            get_target_freqs_output = document.getElementById("hidden_output_target_freqs").innerText
+            get_reference_freqs_output = document.getElementById("hidden_output_reference_freqs").innerText
+            get_target_ACS_output = document.getElementById("hidden_output_target_ACS").innerText
+            get_reference_ACS_output = document.getElementById("hidden_output_reference_ACS").innerText
+            clean_div_output = clean_data(get_target_ug_output, get_reference_ug_output, get_target_output, get_reference_output, get_target_freqs_output, get_reference_freqs_output, get_target_ACS_output, get_reference_ACS_output)         
+            return BytesIO(clean_div_output.to_csv(index=False).encode("utf-8-sig"))
+
+        def show_hidden(self):
+            if document.getElementById("checkbox").checked:
+                document.getElementById("checkbox_div").style.display = "none"
+                document.getElementById("to_hide").style.display = "block"
+
+
+        def main():
+            # Clear "loading"
+            document.getElementById("loader").remove()  
+            document.getElementById("loading_text").remove()            
+            document.getElementById("checkbox_div").style.display = "block" 
+
+            checkbox_tick_proxy = pyodide.ffi.create_proxy(show_hidden)                
+            document.getElementById("checkbox").addEventListener("change", checkbox_tick_proxy) 
+
+            click_proxy_run_button = pyodide.ffi.create_proxy(print_output)                
+            document.getElementById("run_button").addEventListener("click", click_proxy_run_button)
+
+            result = pn.widgets.FileDownload(callback=download_output, filename='output.csv')
+            result.servable(target="download_div_button")
+
+
+        main()
+            
+        </py-script> 
+
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script type="module" src="https://pyscript.net/releases/2023.11.1/core.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.1.1.min.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.1.1.min.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.1.1.min.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.1.1.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@holoviz/panel@1.0.3/dist/bundled/material-components-web@7.0.0/dist/material-components-web.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@holoviz/panel@1.0.3/dist/panel.min.js" crossorigin="anonymous"></script>
+        </script>
+ 
+       
+    </body>
+</html>
+
+
+
+
+
