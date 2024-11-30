@@ -1,6 +1,6 @@
 ## What is MacroNarr? 
 
-MacroNarr is a web-based tool for analyzing narrative discourse. It allows users to analyze the frequency and sequential order of narrative propositions in both experimental and control groups. The tool computes unigram counts, identifies bigrams and trigrams, and provides insights into the narrative organisation and informativeness of narrative content.
+MacroNarr is a web-based tool for analyzing narrative discourse. It allows users to analyze the frequency and sequential order of narrative propositions in both experimental and control groups. The tool computes propositional unigram counts, identifies bigrams and trigrams, and provides insights into the narrative organisation and informativeness of narrative discourse samples.
 
 ## Features and Measures
 
