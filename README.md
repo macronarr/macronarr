@@ -31,4 +31,4 @@ If you have any suggestions or want to contribute to the development of MacroNar
 
 ## Contact
 
-For any questions or feedback, reach out to [the Macronarr Team] at [macronarr@gmail.com] or contact [Andromachi Tsoukala] at [adt48@cam.ac.uk] .
+For any questions or feedback, reach out to the Macronarr Team at macronarr@gmail.com or contact Andromachi Tsoukala at adt48@cam.ac.uk .
