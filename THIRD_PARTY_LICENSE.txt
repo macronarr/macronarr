@@ -1,0 +1,42 @@
+THIRD_PARTY_LICENSES 
+=====================
+
+# This project makes use of the following third-party libraries:
+
+1. **pyodide** (https://pyodide.org/)
+   - License: Mozilla Public License, version 2.0 (MPL-2.0)
+   - Copyright (c) Copyright 2019-2024, Pyodide contributors and Mozilla
+   - License text: https://opensource.org/licenses/MPL-2.0
+
+2. **io** (https://docs.python.org/3/library/io.html)
+   - License: Python Software Foundation License
+   - Copyright (c) 2001-2024 Python Software Foundation
+   - License text: https://www.python.org/download/releases/2.0/license/
+
+3. **asyncio** (https://docs.python.org/3/library/asyncio.html)
+   - License: Python Software Foundation License
+   - Copyright (c) 2001-2024 Python Software Foundation
+   - License text: https://www.python.org/download/releases/2.0/license/
+
+4. **pandas** (https://pandas.pydata.org/)
+   - License: BSD 3-Clause License
+   - Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc., and PyData Development Team
+   - Copyright (c) 2011-2023, Open source contributors.
+   - License text: https://opensource.org/licenses/BSD-3-Clause
+
+5. **panel** (https://panel.holoviz.org/)
+   - License: BSD 3-Clause License
+   - Copyright (c) 2018, HoloViz team (holoviz.org)
+   - License text: https://opensource.org/licenses/BSD-3-Clause
+
+6. **numpy** (https://numpy.org/)
+   - License: BSD 3-Clause License
+   - Copyright (c) 2005-2024, NumPy Developers.
+   - License text: https://opensource.org/licenses/BSD-3-Clause
+
+7. **nltk** (https://www.nltk.org/)
+   - License: Apache License 2.0
+   - Copyright (c) 2001-2024, NLTK Project Contributors.
+   - License text: https://www.apache.org/licenses/LICENSE-2.0
+
+
