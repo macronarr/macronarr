@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- 
+            Copyright © 2024 Andromachi Tsoukala & Vitor Zimmerer
+
+            This file is part of MacroNarr.
+
+            MacroNarr is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+            MacroNarr is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+            You should have received a copy of the GNU General Public License along with MacroNarr. If not, see <https://www.gnu.org/licenses/>. 
+
+        -->
+
+        <title>MacroNarr</title>
+        <link rel="icon" type="image/x-icon" href="assets/discourse.ico" />
+        <link href="css/styles.css" rel="stylesheet" />
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#"></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" aria-current="page" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="about.html">About</a></li>
+                        <li class="nav-item"><a class="nav-link" aria-current="page" href="basics.html">Basics</a></li>
+                        <li class="nav-item"><a class="nav-link" aria-current="page" href="instructions.html">Instructions</a></li>
+                        <li class="nav-item"><a class="nav-link" aria-current="page" href="try_it_out.html">Try it out</a></li>                       
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="container">
+            <div class="text-center mt-5">
+                <h1>About</h1>
+                <div style= "margin-left: 50px; margin-right: 50px; text-align: left">
+
+                    <h5>Background</h5>
+                    <p>Research on narrative discourse has often focused on two levels of analysis: <br> 
+
+                    <ul>
+                        <li><u>Microstructure</u>: within-utterance or intra-sentential dimension (e.g. lexicon and syntax)</li>
+                        <li><u>Macrostructure</u>: between-utterance dimension concerned with the integration of narrative discourse units (e.g. coherence)</li>
+                    </ul>
+
+                    At both levels, analyses of errors have often been employed (e.g. lexical errors, syntactic errors, coherence errors).                    
+                    
+                    </p>      
+                    <div>
+                        <h6 style="color: orange">MacroNarr</h6>
+                        <p>Moving away from error analyses, MacroNarr takes a <b>novel frequentist approach</b> focusing on the level of macrostructure. Instead of deciding whether a part of the narrative contains an error, MacroNarr determines how <q>typical</q> each chunk of a narrative is in relation to reference data (e.g. baseline group). 
+                        <br>
+                        
+                        </p>
+                    </div>
+
+                    <div>
+                        <h6 style="color: black">Citation</h6>
+                        <p> The recommended citation for this tool is: <br>
+                            Tsoukala, A., & Zimmerer, V. (2024). MacroNarr. https://macronarr.github.io/macronarr 
+                            <br>
+                            For other implementation references, see the <a href="https://github.com/macronarr/macronarr/blob/main/MacroNarr_Documentation.pdf">MacroNarr Documentation</a>.
+                                               
+                        </p>
+                    </div>
+                        
+                </div>
+            </div>
+        </div>
+
+        <div id="next-link" style="position: fixed; justify-content: right; bottom: 45px">
+            <p>Next up: <a href="https://macronarr.github.io/macronarr/basics.html">Basics</a></p>
+        </div>
+
+        <footer style="position: fixed; width: 100%; bottom: 0; display: flex; justify-content: space-between; padding: 5px 10px; font-size: 14px;">
+            <div>Contact: macronarr@gmail.com</div>
+            <div style="text-align: right;">
+            <p style="margin: 0;">© 2024-<span id="copyright-year"></span> Andromachi Tsoukala & Vitor Zimmerer. License: <a href="https://github.com/macronarr/macronarr/blob/main/LICENSE.txt">GNU GPL v3.0</a>; <a href="https://github.com/macronarr/macronarr/blob/main/ATTRIBUTIONS.txt">Third-party licenses</a></p>
+            </div>
+        </footer>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js">
+        </script>
+        <script>
+            document.getElementById("copyright-year").textContent = new Date().getFullYear();
+        </script>
+    </body>
+</html>
+
