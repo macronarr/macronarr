@@ -1,27 +1,27 @@
 ## What is MacroNarr? 
 
-MacroNarr is a web-based tool for analyzing narrative discourse. It allows users to analyze the frequency and sequential order of narrative propositions in both experimental and control groups. The tool computes propositional unigram counts, identifies bigrams and trigrams, and provides insights into the narrative organisation and informativeness of narrative discourse samples.
+MacroNarr is a web-based tool for analysing narrative discourse. It allows users to analyse the frequency and sequential order of narrative propositions in both experimental and control groups. The tool computes propositional unigram counts, identifies bigrams and trigrams, and provides insights into the narrative organisation and informativeness of narrative discourse samples.
 
 ## Features and Measures
 
 - **Unigram Count (Unique & Total)**: Quantifies the frequency of propositions, both unique and repeated, to measure informativeness.
-- **Bigrams & Trigrams**: Identifies and analyzes common pairs (bigrams) and triplets (trigrams) of propositions to measure ACS, a novel measure of "typicality" in narrative organisation.
-- **Interactive Analysis**: Easily compare target/experimental and reference/control group data and receive automatic warnings for potential data issues.
+- **Bigrams & Trigrams**: Identifies common pairs (bigrams) and triplets (trigrams) of propositions mentioned in succession.
+- **Associative Chunk Strength (ACS)**: A novel measure of "typicality" in terms of narrative organisation, based on the commonality of bigrams and trigrams produced in a control sample.
 
 ## How to Use
 
-1. Upload your CSV files containing the order of narrative propositions for both the target/experimental and reference/control groups.
-2. The tool will process the data and generate unigram counts, bigram and trigram frequencies, and Associative Chunk Strength (ACS).
+1. Upload files containing the order of narrative propositions for both the target/experimental and reference/control groups.
+2. The tool will process the data and generate unigram counts, bigram and trigram frequencies, and ACS.
 3. Review the results and download them for further analysis.
 
 ## Requirements
 
-- A web browser and internet connection (the tool runs in the browser using Pyodide).
-- CSV files formatted according to the guidelines provided (see MacroNarr Documentation).
+- A web browser and internet connection.
+- CSV files formatted according to the guidelines provided (see the [MacroNarr Documentation](https://github.com/macronarr/macronarr/blob/main/MacroNarr_Documentation.pdf)).
 
 ## Get Started
 
-1. Visit the [MacroNarr website](https://macronarr.github.io/macronarr/index.html).
+1. Visit the [MacroNarr website](https://macronarr.github.io/macronarr).
 2. Click on the "Try it out" page.
 3. Upload your files and wait for the analysis to complete.
 
